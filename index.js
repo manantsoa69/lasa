@@ -1,6 +1,7 @@
 const Redis = require('ioredis');
 const express = require('express');
 const mysql = require('mysql2');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const redis = new Redis(process.env.REDIS_URL);
@@ -41,8 +42,6 @@ async function handleExpirationEvent(key) {
   console.log('Subscription saved in cache:', expireDate);
 }
 
-
-
 // Function to perform batch expiration checks
 async function performBatchExpirationCheck() {
   try {
@@ -54,9 +53,7 @@ async function performBatchExpirationCheck() {
       return;
     }
 
-    const expireDates = await Promise.all(
-      keys.map((key) => redis.get(key))
-    );
+    const expireDates = await Promise.all(keys.map((key) => redis.get(key)));
 
     expireDates.forEach((expireDate, index) => {
       const key = keys[index];
@@ -85,9 +82,14 @@ async function performBatchExpirationCheck() {
   }
 }
 
-
 // Call the function to perform batch expiration check
 performBatchExpirationCheck();
+
+// Cron job to run the expiration check every minute
+cron.schedule('* * * * *', async () => {
+  console.log('Running batch expiration check...');
+  await performBatchExpirationCheck();
+});
 
 // Route to check all data in Redis
 app.get('/api/check', async (req, res) => {
@@ -107,6 +109,9 @@ app.get('/', (req, res) => {
 
 // Start the server
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Worker ${process.pid} listening on port ${port}.`);
 });
+
+// Export the app and server for PM2
+module.exports = { app, server };
