@@ -1,7 +1,6 @@
 const Redis = require('ioredis');
 const express = require('express');
 const mysql = require('mysql2');
-const cron = require('node-cron');
 require('dotenv').config();
 
 const redis = new Redis(process.env.REDIS_URL);
@@ -84,12 +83,6 @@ async function performBatchExpirationCheck() {
 
 // Call the function to perform batch expiration check
 performBatchExpirationCheck();
-
-// Cron job to run the expiration check every minute
-cron.schedule('* * * * *', async () => {
-  console.log('Running batch expiration check...');
-  await performBatchExpirationCheck();
-});
 
 // Route to check all data in Redis
 app.get('/api/check', async (req, res) => {
