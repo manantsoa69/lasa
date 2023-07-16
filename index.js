@@ -113,5 +113,4 @@ const server = app.listen(port, () => {
   console.log(`Worker ${process.pid} listening on port ${port}.`);
 });
 
-// Export the app and server for PM2
-module.exports = { app, server };
+
